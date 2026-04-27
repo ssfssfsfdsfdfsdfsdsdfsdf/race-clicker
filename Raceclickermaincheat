@@ -1,4 +1,4 @@
--- Race Clicker Menu (LocalScript) – Fast Teleport Edition (ULTRA FAST)
+-- Race Clicker Menu (LocalScript) – Fast Teleport Edition (ULTRA FAST, minimum delay 0.01s)
 -- Put in StarterPlayerScripts
 
 local Players = game:GetService("Players")
@@ -21,8 +21,8 @@ local waypoints = {
 -- Farm state
 local farming = false
 local farmThread = nil
-local loopDelay = 0            -- 🔥 now 0 seconds – no extra wait
-local tweenDuration = 0.001    -- 🔥 almost instant smooth teleport
+local loopDelay = 0.01           -- 🔥 minimum 0.01s, not 0.0
+local tweenDuration = 0.001      -- nearly instant smooth teleport
 
 -- Noclip state
 local noclip = false
@@ -153,8 +153,8 @@ yOffset = yOffset + 26
 local btnFarm = makeButton("▶ Start Farm", yOffset, Color3.fromRGB(50, 180, 80))
 yOffset = yOffset + 44
 
--- Speed slider (now shows 0.0s default)
-local speedLabel = makeLabel("Speed (delay): 0.0s", yOffset)
+-- Speed slider (now shows 0.01s default)
+local speedLabel = makeLabel("Speed (delay): 0.01s", yOffset)  -- 🔥 updated label
 yOffset = yOffset + 20
 
 local sliderFrame = Instance.new("Frame")
@@ -166,14 +166,14 @@ sliderFrame.Parent = mainFrame
 Instance.new("UICorner", sliderFrame).CornerRadius = UDim.new(1,0)
 
 local sliderFill = Instance.new("Frame", sliderFrame)
-sliderFill.Size = UDim2.new(0, 0, 1, 0)   -- 🔥 start at 0 delay
+sliderFill.Size = UDim2.new(0, 0, 1, 0)    -- 🔥 start at leftmost (min delay)
 sliderFill.BackgroundColor3 = Color3.fromRGB(210,130,20)
 sliderFill.BorderSizePixel = 0
 Instance.new("UICorner", sliderFill).CornerRadius = UDim.new(1,0)
 
 local sliderKnob = Instance.new("TextButton")
 sliderKnob.Size = UDim2.new(0, 16, 0, 16)
-sliderKnob.Position = UDim2.new(0, -8, 0.5, -8)
+sliderKnob.Position = UDim2.new(0, -8, 0.5, -8)  -- 🔥 at leftmost position
 sliderKnob.BackgroundColor3 = Color3.fromRGB(255,255,255)
 sliderKnob.BorderSizePixel = 0
 sliderKnob.Text = ""
@@ -183,7 +183,7 @@ Instance.new("UICorner", sliderKnob).CornerRadius = UDim.new(1,0)
 
 yOffset = yOffset + 14
 
--- Slider functionality – range 0.0 to 5.0 seconds
+-- Slider functionality – range 0.01 to 5.0 seconds
 local draggingSlider = false
 sliderKnob.MouseButton1Down:Connect(function()
     draggingSlider = true
@@ -199,8 +199,8 @@ RunService.Heartbeat:Connect(function()
     local rel = math.clamp((mouse.X - sliderFrame.AbsolutePosition.X) / sliderFrame.AbsoluteSize.X, 0, 1)
     sliderFill.Size = UDim2.new(rel, 0, 1, 0)
     sliderKnob.Position = UDim2.new(rel, -8, 0.5, -8)
-    loopDelay = rel * 5.0   -- 🔥 0.0 to 5.0 seconds
-    speedLabel.Text = "Speed (delay): " .. string.format("%.1f", loopDelay) .. "s"
+    loopDelay = 0.01 + rel * 4.99   -- 🔥 min 0.01s, max 5.0s
+    speedLabel.Text = "Speed (delay): " .. string.format("%.2f", loopDelay) .. "s"
 end)
 
 -- Noclip toggle
@@ -247,10 +247,8 @@ local function startFarm()
             statusLabel.Text = string.format("Moving to point %d", idx)
             tweenTo(target)
             statusLabel.Text = string.format("At point %d – waiting…", idx)
-            -- 🔥 loopDelay is 0 by default → no wait
-            if loopDelay > 0 then
-                task.wait(loopDelay)
-            end
+            -- 🔥 always wait at least 0.01s (never zero)
+            task.wait(loopDelay)
             idx = idx % #waypoints + 1
         end
     end)
@@ -290,7 +288,7 @@ local function enableNoclip()
         if hrp and bodyVelocity then
             local humanoid = char:FindFirstChildOfClass("Humanoid")
             if humanoid then
-                local moveDir = humanoid.MoveDirection * 60   -- noclip speed (unchanged)
+                local moveDir = humanoid.MoveDirection * 60
                 bodyVelocity.Velocity = moveDir
             end
         end
